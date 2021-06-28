@@ -1,43 +1,43 @@
 export const getAllCustomer = () => {
     return [
         {
-            "customerID": 1,
+            "customerId": 1,
             "customerName": "Hewet Sparkes"
         },
         {
-            "customerID": 2,
+            "customerId": 2,
             "customerName": "Adora Ormesher"
         },
         {
-            "customerID": 3,
+            "customerId": 3,
             "customerName": "Adore Jachimak"
         },
         {
-            "customerID": 4,
+            "customerId": 4,
             "customerName": "Francine Franke"
         },
         {
-            "customerID": 5,
+            "customerId": 5,
             "customerName": "Cordi Hasel"
         },
         {
-            "customerID": 6,
+            "customerId": 6,
             "customerName": "Merrie Swinburn"
         },
         {
-            "customerID": 7,
+            "customerId": 7,
             "customerName": "Willi Thoresbie"
         },
         {
-            "customerID": 8,
+            "customerId": 8,
             "customerName": "Darryl Duffil"
         },
         {
-            "customerID": 9,
+            "customerId": 9,
             "customerName": "Corissa Conechie"
         },
         {
-            "customerID": 10,
+            "customerId": 10,
             "customerName": "Thorn Yakobowitch"
         }
     ]
@@ -146,4 +146,19 @@ export const getAllFoodItem = () => {
             "price": 31.25
         }
     ]
+}
+
+export const createOrder = newRecord => {
+    const orders = JSON.parse(localStorage.getItem('orders'))
+    orders.push(newRecord)
+    localStorage.setItem('orders', JSON.stringify(orders))
+}
+
+export const getAllOrder = () => {
+    return localStorage.getItem('orders')
+}
+
+export const getOrderById = id => {
+    const orders = JSON.parse(localStorage.getItem('orders'))
+    return orders.filter(order => Number(order.orderNumber) === Number(id))[0]
 }

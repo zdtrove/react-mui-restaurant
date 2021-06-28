@@ -1,14 +1,14 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Form from '../../layouts/Form'
+import Popup from '../../layouts/Popup'
 import { Input, Select, Button } from '../../controls'
 import { makeStyles, Grid, InputAdornment, ButtonGroup, Button as MuiButton } from '@material-ui/core'
 import ReplayIcon from '@material-ui/icons/Replay'
 import RestaurantMenuIcon from '@material-ui/icons/RestaurantMenu'
 import ReorderIcon from '@material-ui/icons/Reorder'
-import { useState } from 'react'
-import { useEffect } from 'react'
-import { getAllCustomer } from '../../api'
+import { getAllCustomer, createOrder, getOrderById } from '../../api'
 import { roundTo2DecimalPoint } from "../../utils"
+import OrderList from './OrderList'
 
 const pMethods = [
 	{ id: 'none', title: 'Select' },
@@ -39,13 +39,22 @@ const useStyles = makeStyles(theme => ({
 
 const OrderForm = props => {
 	const classes = useStyles()
-	const { values, setValues, errors, setErrors, handleInputChange } = props
+	const { 
+		values, 
+		setValues, 
+		errors, 
+		setErrors, 
+		handleInputChange,
+		resetFormControls
+	} = props
 	const [customerList, setCustomerList] = useState([])
+	const [showOrderList, setShowOrderList] = useState(false)
+	const [orderId, setOrderId] = useState(0)
 
 	useEffect(() => {
 		const res = getAllCustomer()
 		let customerList = res.map(item => ({
-			id: item.customerID,
+			id: item.customerId,
 			title: item.customerName
 		}))
 		customerList = [{ id: 0, title: 'Select' }].concat(customerList)
@@ -62,9 +71,18 @@ const OrderForm = props => {
 		})
 	}, [JSON.stringify(values.orderDetails)])
 
+	useEffect(() => {
+		if (orderId === 0) resetFormControls()
+		else {
+			const res = getOrderById(orderId)
+			setValues(res)
+			setErrors({})
+		}
+	}, [orderId])
+
 	const validateForm = () => {
 		let temp = {}
-		temp.customerId = values.customerID !== 0 ? "" : "This field is required"
+		temp.customerId = values.customerId !== 0 ? "" : "This field is required"
 		temp.pMethod = values.pMethod !== "none" ? "" : "This field is required"
 		temp.orderDetails = values.orderDetails.length !== 0 ? "" : "This field is required"
 		setErrors({ ...temp })
@@ -75,64 +93,85 @@ const OrderForm = props => {
 	const submitOrder = e => {
 		e.preventDefault()
 		if (validateForm()) {
-
+			const customer = customerList.filter(cus => cus.id === values.customerId)[0]
+			let temp = {
+				customerId: customer.id,
+				customerName: customer.title
+			}
+			createOrder({...values, customer: temp})
+			resetFormControls()
 		}
 	}
 
+	const openListOfOrder = () => {
+		setShowOrderList(true)
+	}
+
 	return (
-		<Form onSubmit={submitOrder}>
-			<Grid container>
-				<Grid item xs={6}>
-					<Input
-						disabled
-						label="Order Number"
-						name="orderNumber"
-						value={values.orderNumber}
-						InputProps={{
-							startAdornment: <InputAdornment
-								position="start"
-								className={classes.adornmentText}
-							>#</InputAdornment>
-						}}
-					/>
-					<Select
-						label="Customer"
-						name="customerId"
-						value={values.customerId}
-						onChange={handleInputChange}
-						options={customerList}
-					/>
+		<>
+			<Form onSubmit={submitOrder}>
+				<Grid container>
+					<Grid item xs={6}>
+						<Input
+							disabled
+							label="Order Number"
+							name="orderNumber"
+							value={values.orderNumber}
+							InputProps={{
+								startAdornment: <InputAdornment
+									position="start"
+									className={classes.adornmentText}
+								>#</InputAdornment>
+							}}
+						/>
+						<Select
+							label="Customer"
+							name="customerId"
+							value={values.customerId}
+							onChange={handleInputChange}
+							options={customerList}
+							error={errors.customerId}
+						/>
+					</Grid>
+					<Grid item xs={6}>
+						<Select
+							label="Payment Method"
+							name="pMethod"
+							value={values.pMethod}
+							onChange={handleInputChange}
+							options={pMethods}
+							error={errors.pMethod}
+						/>
+						<Input
+							disabled
+							label="Grand Total"
+							name="gTotal"
+							value={values.gTotal}
+							InputProps={{
+								startAdornment: <InputAdornment
+									position="start"
+									className={classes.adornmentText}
+								>$</InputAdornment>
+							}}
+						/>
+						<ButtonGroup className={classes.submitButtonGroup}>
+							<MuiButton size="large" type="submit" endIcon={<RestaurantMenuIcon />}>Submit</MuiButton>
+							<MuiButton size="small" startIcon={<ReplayIcon />} />
+						</ButtonGroup>
+						<Button onClick={openListOfOrder} size="large" startIcon={<ReorderIcon />}>
+							Orders
+						</Button>
+					</Grid>
 				</Grid>
-				<Grid item xs={6}>
-					<Select
-						label="Payment Method"
-						name="pMethod"
-						value={values.pMethod}
-						onChange={handleInputChange}
-						options={pMethods}
-					/>
-					<Input
-						disabled
-						label="Grand Total"
-						name="gTotal"
-						value={values.gTotal}
-						InputProps={{
-							startAdornment: <InputAdornment
-								position="start"
-								className={classes.adornmentText}
-							>$</InputAdornment>
-						}}
-					/>
-					<ButtonGroup className={classes.submitButtonGroup}>
-						<MuiButton size="large" type="submit" endIcon={<RestaurantMenuIcon />}>Submit</MuiButton>
-						<MuiButton size="small" startIcon={<ReplayIcon />} />
-					</ButtonGroup>
-					<Button size="large" startIcon={<ReorderIcon />}>
-						Orders
-					</Button>
-				</Grid>
-			</Grid>
-		</Form>
+			</Form>
+			<Popup
+				title="List of Orders"
+				openPopup={showOrderList}
+				setOpenPopup={setShowOrderList}
+			>
+				<OrderList {...{ setOrderId, setShowOrderList }} />
+			</Popup>
+		</>
 	)
 }
 

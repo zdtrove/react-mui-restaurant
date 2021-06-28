@@ -71,8 +71,19 @@ const OrderedFoodItems = props => {
 
     return (
         <List>
-            {
-                orderedFoodItems.map((item, idx) => (
+            {orderedFoodItems.length === 0 ?
+                <ListItem>
+                    <ListItemText
+                        primary="Please select food items"
+                        primaryTypographyProps={{
+                            style: {
+                                textAlign: 'center',
+                                fontStyle: 'italic'
+                            }
+                        }}
+                    />
+                </ListItem>
+                : orderedFoodItems.map((item, idx) => (
                     <Paper key={idx} className={classes.paperRoot}>
                         <ListItem>
                             <ListItemText
