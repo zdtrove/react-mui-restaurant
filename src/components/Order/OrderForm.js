@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import Form from '../../layouts/Form'
 import Popup from '../../layouts/Popup'
+import Notification from '../../layouts/Notification'
 import { Input, Select, Button } from '../../controls'
 import { makeStyles, Grid, InputAdornment, ButtonGroup, Button as MuiButton } from '@material-ui/core'
 import ReplayIcon from '@material-ui/icons/Replay'
 import RestaurantMenuIcon from '@material-ui/icons/RestaurantMenu'
 import ReorderIcon from '@material-ui/icons/Reorder'
-import { getAllCustomer, createOrder, getOrderById } from '../../api'
-import { roundTo2DecimalPoint } from "../../utils"
+import { getAllCustomer, createOrder, getOrderById, updateOrderById } from '../../api'
+import { generateId, roundTo2DecimalPoint } from "../../utils"
 import OrderList from './OrderList'
 
 const pMethods = [
-	{ id: 'none', title: 'Select' },
+	{ id: "none", title: 'Select' },
 	{ id: 'Cash', title: 'Cash' },
 	{ id: 'Card', title: 'Card' }
 ]
@@ -39,17 +40,18 @@ const useStyles = makeStyles(theme => ({
 
 const OrderForm = props => {
 	const classes = useStyles()
-	const { 
-		values, 
-		setValues, 
-		errors, 
-		setErrors, 
+	const {
+		values,
+		setValues,
+		errors,
+		setErrors,
 		handleInputChange,
 		resetFormControls
 	} = props
 	const [customerList, setCustomerList] = useState([])
 	const [showOrderList, setShowOrderList] = useState(false)
-	const [orderId, setOrderId] = useState(0)
+	const [orderId, setOrderId] = useState(null)
+	const [notify, setNotify] = useState({ isOpen: false })
 
 	useEffect(() => {
 		const res = getAllCustomer()
@@ -69,10 +71,10 @@ const OrderForm = props => {
 			...values,
 			gTotal: roundTo2DecimalPoint(gTotal)
 		})
-	}, [JSON.stringify(values.orderDetails)])
+	}, [values.orderDetails, setValues])
 
 	useEffect(() => {
-		if (orderId === 0) resetFormControls()
+		if (!orderId) resetFormControls()
 		else {
 			const res = getOrderById(orderId)
 			setValues(res)
@@ -98,20 +100,28 @@ const OrderForm = props => {
 				customerId: customer.id,
 				customerName: customer.title
 			}
-			createOrder({...values, customer: temp})
-			resetFormControls()
+			if (!values.id) {
+				createOrder({ ...values, id: generateId(), customer: temp })
+				resetFormControls()
+				setNotify({ isOpen: true, message: "New order is created" })
+			} else {
+				updateOrderById(values.id, values)
+				setOrderId(null)
+				setNotify({ isOpen: true, message: "The order is updated" })
+			}
 		}
 	}
 
-	const openListOfOrder = () => {
-		setShowOrderList(true)
+	const resetForm = () => {
+		resetFormControls()
+		setOrderId(null)
 	}
 
 	return (
 		<>
 			<Form onSubmit={submitOrder}>
 				<Grid container>
-					<Grid item xs={6}>
+					<Grid item sm={6}>
 						<Input
 							disabled
 							label="Order Number"
@@ -133,7 +143,7 @@ const OrderForm = props => {
 							error={errors.customerId}
 						/>
 					</Grid>
-					<Grid item xs={6}>
+					<Grid item sm={6}>
 						<Select
 							label="Payment Method"
 							name="pMethod"
@@ -156,9 +166,9 @@ const OrderForm = props => {
 						/>
 						<ButtonGroup className={classes.submitButtonGroup}>
 							<MuiButton size="large" type="submit" endIcon={<RestaurantMenuIcon />}>Submit</MuiButton>
-							<MuiButton size="small" startIcon={<ReplayIcon />} />
+							<MuiButton onClick={resetForm} size="small" startIcon={<ReplayIcon />} />
 						</ButtonGroup>
-						<Button onClick={openListOfOrder} size="large" startIcon={<ReorderIcon />}>
+						<Button onClick={() => setShowOrderList(true)} size="large" startIcon={<ReorderIcon />}>
 							Orders
 						</Button>
 					</Grid>
@@ -169,8 +179,9 @@ const OrderForm = props => {
 				openPopup={showOrderList}
 				setOpenPopup={setShowOrderList}
 			>
-				<OrderList {...{ setOrderId, setShowOrderList }} />
+				<OrderList {...{ setOrderId, setShowOrderList, setNotify }} />
 			</Popup>
+			<Notification {...{ notify, setNotify }} />
 		</>
 	)
 }

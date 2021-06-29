@@ -150,8 +150,13 @@ export const getAllFoodItem = () => {
 
 export const createOrder = newRecord => {
     const orders = JSON.parse(localStorage.getItem('orders'))
-    orders.push(newRecord)
-    localStorage.setItem('orders', JSON.stringify(orders))
+    if (orders) {
+        orders.push(newRecord)
+        localStorage.setItem('orders', JSON.stringify(orders))
+    } else {
+        localStorage.setItem('orders', JSON.stringify([{ ...newRecord }]))
+    }
+
 }
 
 export const getAllOrder = () => {
@@ -160,5 +165,20 @@ export const getAllOrder = () => {
 
 export const getOrderById = id => {
     const orders = JSON.parse(localStorage.getItem('orders'))
-    return orders.filter(order => Number(order.orderNumber) === Number(id))[0]
+    return orders.filter(order => Number(order.id) === Number(id))[0]
+}
+
+export const updateOrderById = (id, newRecord) => {
+    const orders = JSON.parse(localStorage.getItem('orders'))
+    const index = orders.findIndex(order => Number(order.id) === Number(id))
+    orders[index] = newRecord
+    localStorage.setItem('orders', JSON.stringify(orders))
+    return orders
+}
+
+export const deleteOrder = id => {
+    const orders = JSON.parse(localStorage.getItem('orders'))
+    const newOrders = orders.filter(order => Number(order.id) !== Number(id))
+    localStorage.setItem('orders', JSON.stringify(newOrders))
+    return newOrders
 }

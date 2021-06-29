@@ -72,7 +72,6 @@ const SearchFoodItems = props => {
 
     const addFoodItem = foodItem => {
         let x = {
-            orderMasterId: values.orderMasterId,
             orderDetailIds: 0,
             foodItemId: foodItem.foodItemId,
             quantity: 1,

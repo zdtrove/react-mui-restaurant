@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getAllOrder } from '../../api'
+import { getAllOrder, deleteOrder } from '../../api'
 import Table from '../../layouts/Table'
 import {
 	TableHead,
@@ -10,7 +10,7 @@ import {
 import DeleteOutlineTwoToneIcon from '@material-ui/icons/DeleteOutlineTwoTone'
 
 const OrderList = props => {
-	const { setOrderId, setShowOrderList } = props
+	const { setOrderId, setShowOrderList, setNotify } = props
 	const [orderList, setOrderList] = useState([])
 
 	useEffect(() => {
@@ -21,6 +21,15 @@ const OrderList = props => {
 	const showForUpdate = id => {
 		setOrderId(id)
 		setShowOrderList(false)
+	}
+
+	const handleDeleteOrder = id => {
+		if (window.confirm("Are you sure to delete this record?")) {
+			const res = deleteOrder(id)
+			setOrderList(res)
+			setOrderId(null)
+			setNotify({ isOpen: true, message: 'Deleted successfully' })
+		}
 	}
 
 	return (
@@ -36,25 +45,26 @@ const OrderList = props => {
 			</TableHead>
 			<TableBody>
 				{
-					orderList.map((item, idx) => (
-						<TableRow onClick={e => showForUpdate(item.orderNumber)} key={idx}>
-							<TableCell>
-								{item.orderNumber}
-							</TableCell>
-							<TableCell>
-								{item.customer.customerName}
-							</TableCell>
-							<TableCell>
-								{item.pMethod}
-							</TableCell>
-							<TableCell>
-								{item.gTotal}
-							</TableCell>
-							<TableCell>
-								<DeleteOutlineTwoToneIcon color="secondary" />
-							</TableCell>
-						</TableRow>
-					))
+					orderList === null ? <TableRow><TableCell>No Orders</TableCell></TableRow>
+						: orderList.map((item, idx) => (
+							<TableRow key={idx}>
+								<TableCell onClick={() => showForUpdate(item.id)}>
+									{item.orderNumber}
+								</TableCell>
+								<TableCell onClick={() => showForUpdate(item.id)}>
+									{item.customer.customerName}
+								</TableCell>
+								<TableCell onClick={() => showForUpdate(item.id)}>
+									{item.pMethod}
+								</TableCell>
+								<TableCell onClick={() => showForUpdate(item.id)}>
+									{item.gTotal}
+								</TableCell>
+								<TableCell onClick={() => handleDeleteOrder(item.id)}>
+									<DeleteOutlineTwoToneIcon color="secondary" />
+								</TableCell>
+							</TableRow>
+						))
 				}
 			</TableBody>
 		</Table>
